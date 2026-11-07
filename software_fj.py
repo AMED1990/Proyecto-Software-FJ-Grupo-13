@@ -91,23 +91,98 @@ class Cliente(Entidad):
         return f"Cliente ID: {self._id} | Nombre: {self.__nombre} | Email: {self.__email}"
 
 
+
 # ==========================================
 # 5. SERVICIOS (ABSTRACTA Y DERIVADAS - POLIMORFISMO)
 # ==========================================
 class Servicio(Entidad, ABC):
-    def _init_(self, id_servicio, nombre, tarifa_base):
-        super()._init_(id_servicio)
-        self.nombre = nombre
-        self.tarifa_base = tarifa_base
-        self.disponible = True
+    def __init__(self, id_servicio, nombre, tarifa_base):
+        super().__init__(id_servicio)
+        self.nombre = nombre
+        self.tarifa_base = tarifa_base
+        self.disponible = True
 
-    @abstractmethod
-    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
-        """Método sobrecargado: puede recibir solo duración o incluir impuestos/descuentos."""
-        pass
+    @abstractmethod
+    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
+        """Método sobrecargado: puede recibir solo duración o incluir impuestos/descuentos."""
+        pass
 
-    @abstractmethod
-    def describir(self):
-        pass
+    @abstractmethod
+    def describir(self):
+        pass
+
+    def obtener_detalles(self):
+        return self.describir()
+
+class ReservaSalas(Servicio):
+    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
+        costo = self.tarifa_base * duracion
+        costo += costo * impuesto
+        costo -= costo * descuento
+        return costo
+
+    def describir(self):
+        return f"Reserva de Sala - Tarifa por hora: ${self.tarifa_base}"
+
+class AlquilerEquipos(Servicio):
+    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
+        costo = self.tarifa_base * duracion
+        if duracion > 10: # Recargo por uso prolongado
+            costo += 50000
+        costo += costo * impuesto
+        costo -= costo * descuento
+        return costo
+
+    def describir(self):
+        return f"Alquiler de Equipos - Tarifa por hora: ${self.tarifa_base} (Recargo si > 10h)"
+
+class AsesoriaEspecializada(Servicio):
+    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
+        horas_cobro = max(duracion, 2) # Mínimo 2 horas
+        costo = self.tarifa_base * horas_cobro
+        costo += costo * impuesto
+        costo -= costo * descuento
+        return costo
+
+    def describir(self):
+        return f"Asesoría Especializada - Tarifa por hora: ${self.tarifa_base} (Mínimo 2 horas)"
+
+# ==========================================
+# 6. CLASE RESERVA
+# ==========================================
+class Reserva:
+    def __init__(self, id_reserva, cliente, servicio, duracion):
+        self.id_reserva = id_reserva
+        self.cliente = cliente
+        self.servicio = servicio
+        self.duracion = duracion
+        self.estado = "Pendiente"
+        self.costo_total = 0.0
+
+    def confirmar(self, impuesto=0.19, descuento=0.0):
+        try:
+            if not self.servicio.disponible:
+                raise ServicioNoDisponibleException(f"El servicio {self.servicio.nombre} no está disponible.")
+            if self.duracion <= 0:
+                raise ReservaInvalidaException("La duración de la reserva debe ser mayor a 0.")
+           
+            self.costo_total = self.servicio.calcular_costo(self.duracion, impuesto, descuento)
+            self.estado = "Confirmada"
+            logging.info(f"Reserva {self.id_reserva} CONFIRMADA. Total: ${self.costo_total:.2f}")
+            return True
+        except Exception as e:
+            self.estado = "Fallida"
+            logging.error(f"Error al confirmar Reserva {self.id_reserva}: {str(e)}")
+            raise
+
+    def cancelar(self):
+        try:
+            if self.estado == "Cancelada":
+                raise ReservaInvalidaException("La reserva ya está cancelada.")
+            self.estado = "Cancelada"
+            logging.info(f"Reserva {self.id_reserva} CANCELADA.")
+        except Exception as e:
+            logging.error(f"Error al cancelar Reserva {self.id_reserva}: {str(e)}")
+            raise
 
 
