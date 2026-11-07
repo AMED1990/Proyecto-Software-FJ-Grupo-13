@@ -89,3 +89,24 @@ class Cliente(Entidad):
 
     def obtener_detalles(self):
         return f"Cliente ID: {self._id} | Nombre: {self.__nombre} | Email: {self.__email}"
+
+# ==========================================
+# 5. SERVICIOS (ABSTRACTA Y DERIVADAS - POLIMORFISMO)
+# ==========================================
+class Servicio(Entidad, ABC):
+    def _init_(self, id_servicio, nombre, tarifa_base):
+        super()._init_(id_servicio)
+        self.nombre = nombre
+        self.tarifa_base = tarifa_base
+        self.disponible = True
+
+    @abstractmethod
+    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
+        """Método sobrecargado: puede recibir solo duración o incluir impuestos/descuentos."""
+        pass
+
+    @abstractmethod
+    def describir(self):
+        pass
+
+
