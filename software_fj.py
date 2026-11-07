@@ -90,6 +90,7 @@ class Cliente(Entidad):
     def obtener_detalles(self):
         return f"Cliente ID: {self._id} | Nombre: {self.__nombre} | Email: {self.__email}"
 
+
 # ==========================================
 # 5. SERVICIOS (ABSTRACTA Y DERIVADAS - POLIMORFISMO)
 # ==========================================
