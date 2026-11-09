@@ -185,4 +185,113 @@ class Reserva:
             logging.error(f"Error al cancelar Reserva {self.id_reserva}: {str(e)}")
             raise
 
+# ==========================================
+# 7. SISTEMA PRINCIPAL Y SIMULACIÓN (10+ OPERACIONES)
+# ==========================================
+class SoftwareFJ:
+    def __init__(self):
+        self.clientes = []
+        self.servicios = []
+        self.reservas = []
+        self.contador_id = 1
+
+    def registrar_cliente(self, nombre, email, telefono):
+        try:
+            cliente = Cliente(self.contador_id, nombre, email, telefono)
+        except DatoInvalidoException as e:
+            logging.error(f"Fallo al registrar cliente: {e}")
+            print(f"❌ Error: {e}")
+        else:
+            self.clientes.append(cliente)
+            self.contador_id += 1
+            logging.info(f"Cliente '{nombre}' registrado exitosamente.")
+            print(f"✅ Cliente '{nombre}' registrado.")
+        finally:
+            print("-> Intento de registro de cliente finalizado.\n")
+
+    def agregar_servicio(self, servicio):
+        self.servicios.append(servicio)
+
+# ------------------------------------------
+# EJECUCIÓN DE LA SIMULACIÓN
+# ------------------------------------------
+if __name__ == "__main__":
+    print("=== INICIANDO SIMULACIÓN SOFTWARE FJ ===\n")
+    sistema = SoftwareFJ()
+
+    # 1 y 2: Registro de clientes válidos e inválidos
+    print("--- OPERACIÓN 1: Cliente Válido ---")
+    sistema.registrar_cliente("Amed Minota", "amed@unad.edu.co", "3101234567")
+
+    print("--- OPERACIÓN 2: Cliente Inválido (Email incorrecto) ---")
+    sistema.registrar_cliente("Carlos Perez", "carlos_sin_arroba.com", "3209876543")
+
+    # 3, 4 y 5: Creación de Servicios
+    print("--- OPERACIÓN 3, 4 y 5: Creando Servicios ---")
+    sala = ReservaSalas(101, "Sala VIP", 50000)
+    equipo = AlquilerEquipos(102, "Proyector 4K", 30000)
+    asesoria = AsesoriaEspecializada(103, "Asesoría en Python", 80000)
+   
+    sistema.agregar_servicio(sala)
+    sistema.agregar_servicio(equipo)
+    sistema.agregar_servicio(asesoria)
+    print("✅ 3 Servicios creados exitosamente.\n")
+
+    # 6: Reserva Exitosa
+    print("--- OPERACIÓN 6: Reserva Exitosa (Sala) ---")
+    if sistema.clientes:
+        reserva1 = Reserva(1, sistema.clientes[0], sala, 3)
+        try:
+            reserva1.confirmar()
+            print(f"✅ Reserva {reserva1.id_reserva} Exitosa. Total a pagar: ${reserva1.costo_total}")
+        except Exception as e:
+            print(f"❌ Fallo: {e}")
+        finally:
+            print("-> Proceso de reserva finalizado.\n")
+
+    # 7: Reserva con Descuento e Impuestos (Sobrecarga)
+    print("--- OPERACIÓN 7: Reserva con Descuento (Equipo) ---")
+    if sistema.clientes:
+        reserva2 = Reserva(2, sistema.clientes[0], equipo, 12)
+        try:
+            reserva2.confirmar(impuesto=0.19, descuento=0.10)
+            print(f"✅ Reserva {reserva2.id_reserva} Exitosa. Total con recargo e IVA: ${reserva2.costo_total}")
+        except Exception as e:
+            print(f"❌ Fallo: {e}")
+
+    # 8: Reserva Fallida (Duración inválida - Encadenamiento)
+    print("\n--- OPERACIÓN 8: Reserva Fallida (Duración 0) ---")
+    if sistema.clientes:
+        reserva3 = Reserva(3, sistema.clientes[0], asesoria, -2)
+        try:
+            reserva3.confirmar()
+        except ReservaInvalidaException as e:
+            try:
+                raise ValueError("El parámetro de duración no puede ser negativo") from e
+            except ValueError as causa_raiz:
+                print(f"❌ Fallo Crítico: {causa_raiz}")
+                logging.critical(f"Encadenamiento detectado: {causa_raiz}")
+        finally:
+            print("-> Sistema sigue operando sin caerse.\n")
+
+    # 9: Servicio No Disponible
+    print("--- OPERACIÓN 9: Servicio No Disponible ---")
+    equipo.disponible = False
+    if sistema.clientes:
+        reserva4 = Reserva(4, sistema.clientes[0], equipo, 2)
+        try:
+            reserva4.confirmar()
+        except ServicioNoDisponibleException as e:
+            print(f"❌ Fallo: {e}")
+
+    # 10: Cancelación de Reserva
+    print("\n--- OPERACIÓN 10: Cancelar Reserva Exitosa ---")
+    try:
+        reserva1.cancelar()
+        print(f"✅ Reserva {reserva1.id_reserva} ahora está en estado: {reserva1.estado}")
+    except Exception as e:
+        print(f"❌ Error: {e}")
+
+    print("\n=== FIN DE LA SIMULACIÓN. Revisa el archivo 'logs.txt' ===")
+
 
