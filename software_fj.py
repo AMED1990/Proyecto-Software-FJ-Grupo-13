@@ -15,26 +15,21 @@ logging.basicConfig(
 # 2. EXCEPCIONES PERSONALIZADAS
 # ==========================================
 class SoftwareFJException(Exception):
-    """Excepción base para el sistema."""
     pass
 
 class DatoInvalidoException(SoftwareFJException):
-    """Para errores de validación de datos."""
     pass
 
 class ServicioNoDisponibleException(SoftwareFJException):
-    """Para cuando un servicio no está operativo."""
     pass
 
 class ReservaInvalidaException(SoftwareFJException):
-    """Para errores al procesar reservas."""
     pass
 
 # ==========================================
 # 3. CLASES ABSTRACTAS Y ENTIDADES
 # ==========================================
 class Entidad(ABC):
-    """Clase abstracta base del sistema."""
     def __init__(self, id_entidad):
         self._id = id_entidad
 
@@ -52,7 +47,6 @@ class Cliente(Entidad):
         self.__email = None
         self.__telefono = None
         
-        # Uso de setters para validar
         self.nombre = nombre
         self.email = email
         self.telefono = telefono
@@ -90,100 +84,97 @@ class Cliente(Entidad):
     def obtener_detalles(self):
         return f"Cliente ID: {self._id} | Nombre: {self.__nombre} | Email: {self.__email}"
 
-
-
 # ==========================================
 # 5. SERVICIOS (ABSTRACTA Y DERIVADAS - POLIMORFISMO)
 # ==========================================
 class Servicio(Entidad, ABC):
-    def __init__(self, id_servicio, nombre, tarifa_base):
-        super().__init__(id_servicio)
-        self.nombre = nombre
-        self.tarifa_base = tarifa_base
-        self.disponible = True
+    def __init__(self, id_servicio, nombre, tarifa_base):
+        super().__init__(id_servicio)
+        self.nombre = nombre
+        self.tarifa_base = tarifa_base
+        self.disponible = True
 
-    @abstractmethod
-    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
-        """Método sobrecargado: puede recibir solo duración o incluir impuestos/descuentos."""
-        pass
+    @abstractmethod
+    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
+        pass
 
-    @abstractmethod
-    def describir(self):
-        pass
+    @abstractmethod
+    def describir(self):
+        pass
 
-    def obtener_detalles(self):
-        return self.describir()
+    def obtener_detalles(self):
+        return self.describir()
 
 class ReservaSalas(Servicio):
-    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
-        costo = self.tarifa_base * duracion
-        costo += costo * impuesto
-        costo -= costo * descuento
-        return costo
+    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
+        costo = self.tarifa_base * duracion
+        costo += costo * impuesto
+        costo -= costo * descuento
+        return costo
 
-    def describir(self):
-        return f"Reserva de Sala - Tarifa por hora: ${self.tarifa_base}"
+    def describir(self):
+        return f"Reserva de Sala - Tarifa por hora: ${self.tarifa_base}"
 
 class AlquilerEquipos(Servicio):
-    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
-        costo = self.tarifa_base * duracion
-        if duracion > 10: # Recargo por uso prolongado
-            costo += 50000
-        costo += costo * impuesto
-        costo -= costo * descuento
-        return costo
+    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
+        costo = self.tarifa_base * duracion
+        if duracion > 10:
+            costo += 50000 
+        costo += costo * impuesto
+        costo -= costo * descuento
+        return costo
 
-    def describir(self):
-        return f"Alquiler de Equipos - Tarifa por hora: ${self.tarifa_base} (Recargo si > 10h)"
+    def describir(self):
+        return f"Alquiler de Equipos - Tarifa por hora: ${self.tarifa_base} (Recargo si > 10h)"
 
 class AsesoriaEspecializada(Servicio):
-    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
-        horas_cobro = max(duracion, 2) # Mínimo 2 horas
-        costo = self.tarifa_base * horas_cobro
-        costo += costo * impuesto
-        costo -= costo * descuento
-        return costo
+    def calcular_costo(self, duracion, impuesto=0.0, descuento=0.0):
+        horas_cobro = max(duracion, 2)
+        costo = self.tarifa_base * horas_cobro
+        costo += costo * impuesto
+        costo -= costo * descuento
+        return costo
 
-    def describir(self):
-        return f"Asesoría Especializada - Tarifa por hora: ${self.tarifa_base} (Mínimo 2 horas)"
+    def describir(self):
+        return f"Asesoría Especializada - Tarifa por hora: ${self.tarifa_base} (Mínimo 2 horas)"
 
 # ==========================================
 # 6. CLASE RESERVA
 # ==========================================
 class Reserva:
-    def __init__(self, id_reserva, cliente, servicio, duracion):
-        self.id_reserva = id_reserva
-        self.cliente = cliente
-        self.servicio = servicio
-        self.duracion = duracion
-        self.estado = "Pendiente"
-        self.costo_total = 0.0
+    def __init__(self, id_reserva, cliente, servicio, duracion):
+        self.id_reserva = id_reserva
+        self.cliente = cliente
+        self.servicio = servicio
+        self.duracion = duracion
+        self.estado = "Pendiente"
+        self.costo_total = 0.0
 
-    def confirmar(self, impuesto=0.19, descuento=0.0):
-        try:
-            if not self.servicio.disponible:
-                raise ServicioNoDisponibleException(f"El servicio {self.servicio.nombre} no está disponible.")
-            if self.duracion <= 0:
-                raise ReservaInvalidaException("La duración de la reserva debe ser mayor a 0.")
-           
-            self.costo_total = self.servicio.calcular_costo(self.duracion, impuesto, descuento)
-            self.estado = "Confirmada"
-            logging.info(f"Reserva {self.id_reserva} CONFIRMADA. Total: ${self.costo_total:.2f}")
-            return True
-        except Exception as e:
-            self.estado = "Fallida"
-            logging.error(f"Error al confirmar Reserva {self.id_reserva}: {str(e)}")
-            raise
+    def confirmar(self, impuesto=0.19, descuento=0.0):
+        try:
+            if not self.servicio.disponible:
+                raise ServicioNoDisponibleException(f"El servicio {self.servicio.nombre} no está disponible.")
+            if self.duracion <= 0:
+                raise ReservaInvalidaException("La duración de la reserva debe ser mayor a 0.")
+            
+            self.costo_total = self.servicio.calcular_costo(self.duracion, impuesto, descuento)
+            self.estado = "Confirmada"
+            logging.info(f"Reserva {self.id_reserva} CONFIRMADA. Total: ${self.costo_total:.2f}")
+            return True
+        except Exception as e:
+            self.estado = "Fallida"
+            logging.error(f"Error al confirmar Reserva {self.id_reserva}: {str(e)}")
+            raise 
 
-    def cancelar(self):
-        try:
-            if self.estado == "Cancelada":
-                raise ReservaInvalidaException("La reserva ya está cancelada.")
-            self.estado = "Cancelada"
-            logging.info(f"Reserva {self.id_reserva} CANCELADA.")
-        except Exception as e:
-            logging.error(f"Error al cancelar Reserva {self.id_reserva}: {str(e)}")
-            raise
+    def cancelar(self):
+        try:
+            if self.estado == "Cancelada":
+                raise ReservaInvalidaException("La reserva ya está cancelada.")
+            self.estado = "Cancelada"
+            logging.info(f"Reserva {self.id_reserva} CANCELADA.")
+        except Exception as e:
+            logging.error(f"Error al cancelar Reserva {self.id_reserva}: {str(e)}")
+            raise
 
 # ==========================================
 # 7. SISTEMA PRINCIPAL Y SIMULACIÓN (10+ OPERACIONES)
@@ -231,7 +222,7 @@ if __name__ == "__main__":
     sala = ReservaSalas(101, "Sala VIP", 50000)
     equipo = AlquilerEquipos(102, "Proyector 4K", 30000)
     asesoria = AsesoriaEspecializada(103, "Asesoría en Python", 80000)
-   
+    
     sistema.agregar_servicio(sala)
     sistema.agregar_servicio(equipo)
     sistema.agregar_servicio(asesoria)
@@ -252,7 +243,7 @@ if __name__ == "__main__":
     # 7: Reserva con Descuento e Impuestos (Sobrecarga)
     print("--- OPERACIÓN 7: Reserva con Descuento (Equipo) ---")
     if sistema.clientes:
-        reserva2 = Reserva(2, sistema.clientes[0], equipo, 12)
+        reserva2 = Reserva(2, sistema.clientes[0], equipo, 12) 
         try:
             reserva2.confirmar(impuesto=0.19, descuento=0.10)
             print(f"✅ Reserva {reserva2.id_reserva} Exitosa. Total con recargo e IVA: ${reserva2.costo_total}")
@@ -267,7 +258,7 @@ if __name__ == "__main__":
             reserva3.confirmar()
         except ReservaInvalidaException as e:
             try:
-                raise ValueError("El parámetro de duración no puede ser negativo") from e
+                raise ValueError("El parametro de duracion no puede ser negativo") from e
             except ValueError as causa_raiz:
                 print(f"❌ Fallo Crítico: {causa_raiz}")
                 logging.critical(f"Encadenamiento detectado: {causa_raiz}")
@@ -276,7 +267,7 @@ if __name__ == "__main__":
 
     # 9: Servicio No Disponible
     print("--- OPERACIÓN 9: Servicio No Disponible ---")
-    equipo.disponible = False
+    equipo.disponible = False 
     if sistema.clientes:
         reserva4 = Reserva(4, sistema.clientes[0], equipo, 2)
         try:
@@ -288,10 +279,8 @@ if __name__ == "__main__":
     print("\n--- OPERACIÓN 10: Cancelar Reserva Exitosa ---")
     try:
         reserva1.cancelar()
-        print(f"✅ Reserva {reserva1.id_reserva} ahora está en estado: {reserva1.estado}")
+        print(f"✅ Reserva {reserva1.id_reserva} ahora esta en estado: {reserva1.estado}")
     except Exception as e:
         print(f"❌ Error: {e}")
 
     print("\n=== FIN DE LA SIMULACIÓN. Revisa el archivo 'logs.txt' ===")
-
-
