@@ -284,3 +284,5 @@ if __name__ == "__main__":
         print(f"❌ Error: {e}")
 
     print("\n=== FIN DE LA SIMULACIÓN. Revisa el archivo 'logs.txt' ===")
+
+
